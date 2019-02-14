@@ -1,44 +1,61 @@
 version: '2.2'
 services:
-  proxy-envoy:
-    image: docker.loc:5000/envoyproxy/envoy:1.9.0-alpine
+  #  xds-redis:
+  #    image: docker.loc:5000/redis:4.0.8-alpine
+  #
+  #  xds-server:
+  #    image: docker.loc:5000/node:10-15.1-alpine
+  #    environment:
+  #      - "NPM_REGISTRY=https://registry.npmjs.org"
+  #    expose:
+  #      - 3000
+  #    volumes:
+  #      - $PWD/upstream:/app
+  #      - /var/run/docker.sock:/var/run/docker.sock
+  #    depends_on:
+  #      - xds-redis
+  #    working_dir: /app
+  #    command: sh -c "npm install; npm start"
+
+  envoy:
+    image: envoyproxy/envoy-alpine:latest
     volumes:
-      - $PWD/dynamic-envoy.yaml:/etc/envoy/envoy.yaml:ro
+      - $PWD/envoy.yaml:/etc/envoy/envoy.yaml:ro
     expose:
       - 8001
     ports:
-      - 6000:6000      # redis
-      - 6001:6001      # postgres
-      - 6002:6002      # node
+      - 6000:6000       # redis
+      - 6001:6001       # postgres
+      - 6002:6002       # node
+      - 6003:6003       # ssh
       - 8001:8001
       - 10000:10000
     dns:
       - 172.16.40.227
       - 192.168.1.217
+    #    depends_on:
+    #      - xds-server
     command: "/usr/local/bin/envoy -c /etc/envoy/envoy.yaml --service-cluster test --service-node master"
     #    environment:
     #      - loglevel=debug
 
-  proxy-xds-server:
-    image: docker.loc:5000/node:10-15.1-alpine
-    environment:
-      - "NPM_REGISTRY=https://registry.npmjs.org"
+  proxy-redis1:
+    image: docker.loc:5000/redis:4.0.8-alpine
     expose:
-      - 7777
-    volumes:
-      - $PWD/upstream:/app
-    working_dir: /app
-    command: sh -c "npm install; npm start"
+      - 6379
+    labels:
+      - "envoy.domain=dls.partdp.ir"
+      - "envoy.port=80"
 
-  #  proxy-redis1:
-#    image: docker.loc:5000/redis:4.0.8-alpine
-#    expose:
-#      - 6379
-#
-#  proxy-redis2:
-#    image: docker.loc:5000/redis:4.0.8-alpine
-#    expose:
-#      - 6379
+  proxy-redis2:
+    image: docker.loc:5000/redis:4.0.8-alpine
+    expose:
+      - 6379
+
+  proxy-ssh1:
+    image: eg_sshd
+    expose:
+      - 22
 #
 #  proxy-pg1-master:
 #    image: docker.loc:5000/postgres:10.6
@@ -47,23 +64,23 @@ services:
 #    volumes:
 #      - $PWD/service/proxy-pg1-master:/var/lib/postgresql/data
 
-  proxy-node1:
-    image: docker.loc:5000/node:8.12.0-alpine
-    working_dir: /app
-    expose:
-      - 3000
-    volumes:
-      - $PWD/service/proxy-node1:/app
-    command:  sh -c "npm install; npm start"
-
-  proxy-node2:
-    image: docker.loc:5000/node:8.12.0-alpine
-    working_dir: /app
-    expose:
-      - 3000
-    volumes:
-      - $PWD/service/proxy-node2:/app
-    command:  sh -c "npm install; npm start"
+#  proxy-node1:
+#    image: docker.loc:5000/node:8.12.0-alpine
+#    working_dir: /app
+#    expose:
+#      - 3000
+#    volumes:
+#      - $PWD/service/proxy-node1:/app
+#    command:  sh -c "npm install; npm start"
+#
+#  proxy-node2:
+#    image: docker.loc:5000/node:8.12.0-alpine
+#    working_dir: /app
+#    expose:
+#      - 3000
+#    volumes:
+#      - $PWD/service/proxy-node2:/app
+#    command:  sh -c "npm install; npm start"
 
 networks:
   default:

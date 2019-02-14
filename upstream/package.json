@@ -5,9 +5,12 @@
     "start": "node index.js"
   },
   "dependencies": {
+    "config": "^3.0.1",
     "bluebird": "^3.5.2",
     "body-parser": "^1.18.3",
-    "config": "^2.0.1",
-    "express": "^4.16.3"
+    "express": "^4.16.3",
+    "require-all": "^3.0.0",
+    "dockerode": "^2.5.8",
+    "redis": "^2.8.0"
   }
 }
